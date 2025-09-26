@@ -47,11 +47,15 @@ const captureBtn = document.getElementById('captureBtn');
 const solvePhotoBtn = document.getElementById('solvePhotoBtn');
 const ctx = canvas.getContext('2d');
 
-// ------------------- Webcam -------------------
-navigator.mediaDevices.getUserMedia({ video:true })
-  .then(stream => { video.srcObject = stream; })
-  .catch(err => console.error("Webcam error:", err));
+// ------------------- Webcam (Back Camera) -------------------
+navigator.mediaDevices.getUserMedia({ 
+  video: { facingMode: { exact: "environment" } } 
+})
+.catch(() => navigator.mediaDevices.getUserMedia({ video: true })) // fallback
+.then(stream => { video.srcObject = stream; })
+.catch(err => console.error("Camera error:", err));
 
+// ------------------- Capture from Webcam -------------------
 captureBtn.addEventListener('click', () => {
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
   alert("Photo captured! Click 'Extract Text from Captured Photo'");
