@@ -1,139 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Teacher To-Do List</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f0f4f8;
-      display: flex;
-      justify-content: center;
-      padding: 50px;
-    }
-    .container {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      width: 100%;
-      max-width: 500px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-    form {
-      display: flex;
-      margin-bottom: 20px;
-    }
-    input, select {
-      flex: 1;
-      padding: 10px;
-      margin-right: 10px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-    button {
-      padding: 10px;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-    li {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px;
-      border-bottom: 1px solid #eee;
-    }
-    li.completed span {
-      text-decoration: line-through;
-      color: gray;
-    }
-    .category {
-      font-size: 0.85em;
-      background: #e0e0e0;
-      padding: 2px 6px;
-      border-radius: 4px;
-      margin-left: 10px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Dashboard</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f0f4f8; padding: 20px; }
+  .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);}
+  h1 { text-align: center; }
+  #clock { font-size: 1.5em; text-align: center; margin-bottom: 20px; }
+  form { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+  input, select, textarea { padding: 10px; flex: 1 1 200px; border-radius: 5px; border: 1px solid #ccc; }
+  button { padding: 10px 20px; border-radius: 5px; border: none; background: #007bff; color: white; cursor: pointer; }
+  button:hover { background: #0056b3; }
+  ul { list-style: none; padding: 0; }
+  li { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; flex-wrap: wrap; }
+  .completed { text-decoration: line-through; color: gray; }
+  .task-info { flex: 1 1 60%; }
+  .countdown { font-weight: bold; }
+  .high { color: red; }
+  .medium { color: orange; }
+  .low { color: green; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>Teacher To-Do List</h1>
-    <form id="taskForm">
-      <input type="text" id="taskInput" placeholder="Enter task..." required>
-      <select id="categoryInput">
-        <option value="General">General</option>
-        <option value="Grading">Grading</option>
-        <option value="Meeting">Meeting</option>
-        <option value="Lesson Planning">Lesson Planning</option>
-      </select>
-      <button type="submit">Add</button>
-    </form>
-    <ul id="taskList"></ul>
-  </div>
+<div class="container">
+  <h1>Teacher Dashboard</h1>
+  <div id="clock"></div>
 
-  <script>
-    const taskForm = document.getElementById('taskForm');
-    const taskInput = document.getElementById('taskInput');
-    const categoryInput = document.getElementById('categoryInput');
-    const taskList = document.getElementById('taskList');
+  <form id="taskForm">
+    <input type="text" id="taskTitle" placeholder="Task title" required>
+    <textarea id="taskDesc" placeholder="Description" rows="1"></textarea>
+    <select id="taskCategory">
+      <option value="General">General</option>
+      <option value="Homework">Homework</option>
+      <option value="Quiz">Quiz</option>
+      <option value="Project">Project</option>
+      <option value="Meeting">Meeting</option>
+    </select>
+    <input type="datetime-local" id="taskDue" required>
+    <button type="submit">Add Task</button>
+  </form>
 
-    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+  <ul id="taskList"></ul>
+</div>
 
-    function renderTasks() {
-      taskList.innerHTML = '';
-      tasks.forEach((task, index) => {
-        const li = document.createElement('li');
-        li.className = task.completed ? 'completed' : '';
-        li.innerHTML = `
-          <span>${task.name} <span class="category">${task.category}</span></span>
-          <div>
-            <button onclick="toggleComplete(${index})">✔️</button>
-            <button onclick="deleteTask(${index})">🗑️</button>
-          </div>
-        `;
-        taskList.appendChild(li);
-      });
-      localStorage.setItem('tasks', JSON.stringify(tasks));
-    }
+<script>
+// Live clock
+const clock = document.getElementById('clock');
+function updateClock() {
+  const now = new Date();
+  clock.textContent = now.toLocaleString();
+}
+setInterval(updateClock, 1000);
+updateClock();
 
-    function toggleComplete(index) {
-      tasks[index].completed = !tasks[index].completed;
-      renderTasks();
-    }
+// Task handling
+const taskForm = document.getElementById('taskForm');
+const taskList = document.getElementById('taskList');
 
-    function deleteTask(index) {
-      tasks.splice(index, 1);
-      renderTasks();
-    }
+let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
 
-    taskForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const newTask = {
-        name: taskInput.value,
-        category: categoryInput.value,
-        completed: false
-      };
-      tasks.push(newTask);
-      taskInput.value = '';
-      renderTasks();
-    });
+function calculateCountdown(due) {
+  const now = new Date();
+  const diff = new Date(due) - now;
+  if (diff <= 0) return "Time's up!";
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+  const seconds = Math.floor((diff / 1000) % 60);
+  return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+}
 
-    renderTasks();
-  </script>
+function renderTasks() {
+  taskList.innerHTML = '';
+  tasks.forEach((task, index) => {
+    const li = document.createElement('li');
+    li.className = task.completed ? 'completed' : '';
+
+    const now = new Date();
+    const dueDate = new Date(task.due);
+    const diff = dueDate - now;
+    let urgency = 'low';
+    if (diff <= 24*60*60*1000) urgency = 'high';
+    else if (diff <= 3*24*60*60*1000) urgency = 'medium';
+
+    li.innerHTML = `
+      <div class="task-info">
+        <strong>${task.title}</strong> (${task.category})<br>
+        ${task.desc}<br>
+        <span class="countdown ${urgency}" id="countdown-${index}"></span>
+      </div>
+      <div>
+        <button onclick="toggleComplete(${index})">✔️</button>
+        <button onclick="deleteTask(${index})">🗑️</button>
+      </div>
+    `;
+    taskList.appendChild(li);
+  });
+  localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+// Update countdowns every second
+setInterval(() => {
+  tasks.forEach((task, index) => {
+    const countdownEl = document.getElementById(`countdown-${index}`);
+    if (countdownEl) countdownEl.textContent = calculateCountdown(task.due);
+  });
+}, 1000);
+
+function toggleComplete(index) {
+  tasks[index].completed = !tasks[index].completed;
+  renderTasks();
+}
+
+function deleteTask(index) {
+  tasks.splice(index, 1);
+  renderTasks();
+}
+
+taskForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const newTask = {
+    title: document.getElementById('taskTitle').value,
+    desc: document.getElementById('taskDesc').value,
+    category: document.getElementById('taskCategory').value,
+    due: document.getElementById('taskDue').value,
+    completed: false
+  };
+  tasks.push(newTask);
+  taskForm.reset();
+  renderTasks();
+});
+
+renderTasks();
+</script>
 </body>
 </html>
