@@ -7,7 +7,6 @@
 <style>
   body {
     font-family: Arial, sans-serif;
-    background: #f0f4f8;
     margin: 0;
     padding: 20px;
     transition: background 0.5s ease;
@@ -15,16 +14,36 @@
   .container {
     max-width: 900px;
     margin: auto;
-    background: rgba(255,255,255,0.9);
+    background: rgba(255,255,255,0.8); /* semi-transparent for background */
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   }
   h1 { text-align: center; }
   #clock { font-size: 1.5em; text-align: center; margin-bottom: 20px; }
-  form { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+
+  /* Background controls */
+  #backgroundControls { margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  #backgroundControls input, #backgroundControls button { padding: 10px; border-radius: 5px; border: 1px solid #ccc; cursor: pointer; }
+
+  /* Circular timer */
+  #timerContainer {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 20px auto;
+  }
+  svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  circle { fill: none; stroke-width: 10; }
+  #backgroundCircle { stroke: #eee; }
+  #progressCircle { stroke: #007bff; stroke-linecap: round; transition: stroke-dashoffset 0.5s linear; }
+  #timeDisplay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2em; }
+  #timerControls { text-align: center; margin-top: 10px; }
+
+  /* Task list */
+  form { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; justify-content: center; }
   input, select, textarea, button { padding: 10px; border-radius: 5px; border: 1px solid #ccc; }
-  button { background: #007bff; color: white; border: none; cursor: pointer; }
+  button { background: #007bff; color: white; border: none; }
   button:hover { background: #0056b3; }
   ul { list-style: none; padding: 0; margin-bottom: 20px; }
   li { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; flex-wrap: wrap; }
@@ -34,15 +53,11 @@
   .high { color: red; }
   .medium { color: orange; }
   .low { color: green; }
-  #timerContainer { position: relative; width: 200px; height: 200px; margin: auto; }
-  svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-  circle { fill: none; stroke-width: 10; }
-  #backgroundCircle { stroke: #eee; }
-  #progressCircle { stroke: #007bff; stroke-linecap: round; transition: stroke-dashoffset 0.5s linear; }
-  #timeDisplay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2em; }
-  #backgroundControls { margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; }
+
+  /* Calculator */
   #calculator { margin-top: 20px; padding: 10px; background: #e8e8e8; border-radius: 10px; }
   #calculator input { width: 100%; margin-bottom: 10px; }
+  #calculator button { width: 23%; margin: 1%; padding: 10px; }
 </style>
 </head>
 <body>
@@ -65,12 +80,12 @@
       <circle id="progressCircle" cx="100" cy="100" r="90" stroke-dasharray="565.48" stroke-dashoffset="0"></circle>
     </svg>
     <div id="timeDisplay">00:00</div>
-    <div style="text-align:center; margin-top:10px;">
-      <input type="number" id="timerMinutes" placeholder="Minutes (max 60)" min="1" max="60">
-      <button id="startTimerBtn">Start</button>
-      <button id="pauseTimerBtn">Pause</button>
-      <button id="resetTimerBtn">Reset</button>
-    </div>
+  </div>
+  <div id="timerControls">
+    <input type="number" id="timerMinutes" placeholder="Minutes (1-60)" min="1" max="60">
+    <button id="startTimerBtn">Start</button>
+    <button id="pauseTimerBtn">Pause</button>
+    <button id="resetTimerBtn">Reset</button>
   </div>
 
   <!-- Task List -->
@@ -87,7 +102,6 @@
     <input type="datetime-local" id="taskDue" required>
     <button type="submit">Add Task</button>
   </form>
-
   <ul id="taskList"></ul>
 
   <!-- Simple Calculator -->
@@ -139,14 +153,16 @@ const resetBg = document.getElementById('resetBg');
 
 bgColor.addEventListener('input', () => {
   document.body.style.background = bgColor.value;
+  document.querySelector('.container').style.background = bgColor.value + 'cc'; // semi-transparent
 });
 
 bgImage.addEventListener('change', e => {
   const file = e.target.files[0];
-  if(file) {
+  if(file){
     const reader = new FileReader();
     reader.onload = () => {
       document.body.style.background = `url(${reader.result}) no-repeat center center / cover`;
+      document.querySelector('.container').style.background = `url(${reader.result}) no-repeat center center / cover`;
     };
     reader.readAsDataURL(file);
   }
@@ -154,6 +170,7 @@ bgImage.addEventListener('change', e => {
 
 resetBg.addEventListener('click', () => {
   document.body.style.background = bgColor.value;
+  document.querySelector('.container').style.background = bgColor.value + 'cc';
   bgImage.value = '';
 });
 
@@ -175,29 +192,27 @@ function updateTimerDisplay() {
   timeDisplay.textContent = `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
   const circleCircumference = 2*Math.PI*90;
   const offset = circleCircumference * (1 - remainingSeconds/totalSeconds);
+  progressCircle.style.strokeDasharray = circleCircumference;
   progressCircle.style.strokeDashoffset = offset;
 }
 
 startBtn.addEventListener('click', () => {
   const minutes = parseInt(timerMinutes.value);
   if(!minutes || minutes > 60) return alert("Enter 1-60 minutes");
-  if(!timerInterval) {
-    totalSeconds = minutes*60;
-    remainingSeconds = totalSeconds;
+  clearInterval(timerInterval);
+  totalSeconds = minutes*60;
+  remainingSeconds = totalSeconds;
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    remainingSeconds--;
     updateTimerDisplay();
-    timerInterval = setInterval(() => {
-      remainingSeconds--;
-      updateTimerDisplay();
-      if(remainingSeconds <= 0) clearInterval(timerInterval);
-    },1000);
-  }
+    if(remainingSeconds <= 0) clearInterval(timerInterval);
+  },1000);
 });
 
-pauseBtn.addEventListener('click', () => clearInterval(timerInterval) || (timerInterval=null));
-
-resetBtn.addEventListener('click', () => {
+pauseBtn.addEventListener('click', ()=> clearInterval(timerInterval));
+resetBtn.addEventListener('click', ()=>{
   clearInterval(timerInterval);
-  timerInterval = null;
   remainingSeconds = totalSeconds;
   updateTimerDisplay();
 });
