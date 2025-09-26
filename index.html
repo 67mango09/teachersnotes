@@ -14,10 +14,11 @@
   .container {
     max-width: 900px;
     margin: auto;
-    background: rgba(255,255,255,0.8); /* semi-transparent for background */
+    background: rgba(255,255,255,0.8);
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transition: background 0.5s ease;
   }
   h1 { text-align: center; }
   #clock { font-size: 1.5em; text-align: center; margin-bottom: 20px; }
@@ -55,9 +56,41 @@
   .low { color: green; }
 
   /* Calculator */
-  #calculator { margin-top: 20px; padding: 10px; background: #e8e8e8; border-radius: 10px; }
-  #calculator input { width: 100%; margin-bottom: 10px; }
-  #calculator button { width: 23%; margin: 1%; padding: 10px; }
+  #calculator {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 12px;
+    max-width: 300px;
+    transition: background 0.5s ease;
+  }
+  #calcDisplay {
+    width: 100%;
+    height: 40px;
+    margin-bottom: 10px;
+    text-align: right;
+    font-size: 1.2em;
+    padding-right: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+  .calc-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .calc-buttons button {
+    flex: 1 1 22%;
+    padding: 15px 0;
+    font-size: 1.2em;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    background: #f0f0f0;
+    transition: 0.2s;
+  }
+  .calc-buttons button:hover { background: #d0d0d0; }
+  .calc-buttons .operator { background: #007bff; color: white; }
+  .calc-buttons .operator:hover { background: #0056b3; }
 </style>
 </head>
 <body>
@@ -104,35 +137,34 @@
   </form>
   <ul id="taskList"></ul>
 
-  <!-- Simple Calculator -->
+  <!-- Improved Calculator -->
   <div id="calculator">
     <h2>Calculator</h2>
     <input type="text" id="calcDisplay" readonly>
-    <div>
+    <div class="calc-buttons">
       <button onclick="calcPress('7')">7</button>
       <button onclick="calcPress('8')">8</button>
       <button onclick="calcPress('9')">9</button>
-      <button onclick="calcPress('/')">/</button>
-    </div>
-    <div>
+      <button class="operator" onclick="calcPress('/')">÷</button>
+
       <button onclick="calcPress('4')">4</button>
       <button onclick="calcPress('5')">5</button>
       <button onclick="calcPress('6')">6</button>
-      <button onclick="calcPress('*')">*</button>
-    </div>
-    <div>
+      <button class="operator" onclick="calcPress('*')">×</button>
+
       <button onclick="calcPress('1')">1</button>
       <button onclick="calcPress('2')">2</button>
       <button onclick="calcPress('3')">3</button>
-      <button onclick="calcPress('-')">-</button>
-    </div>
-    <div>
+      <button class="operator" onclick="calcPress('-')">−</button>
+
       <button onclick="calcPress('0')">0</button>
       <button onclick="calcPress('.')">.</button>
       <button onclick="calcCalculate()">=</button>
-      <button onclick="calcPress('+')">+</button>
+      <button class="operator" onclick="calcPress('+')">+</button>
+
+      <button onclick="calcClear()">C</button>
+      <button onclick="calcBackspace()">←</button>
     </div>
-    <button onclick="calcClear()">C</button>
   </div>
 </div>
 
@@ -153,7 +185,8 @@ const resetBg = document.getElementById('resetBg');
 
 bgColor.addEventListener('input', () => {
   document.body.style.background = bgColor.value;
-  document.querySelector('.container').style.background = bgColor.value + 'cc'; // semi-transparent
+  document.querySelector('.container').style.background = bgColor.value + 'cc';
+  document.getElementById('calculator').style.background = bgColor.value + 'cc';
 });
 
 bgImage.addEventListener('change', e => {
@@ -161,8 +194,10 @@ bgImage.addEventListener('change', e => {
   if(file){
     const reader = new FileReader();
     reader.onload = () => {
-      document.body.style.background = `url(${reader.result}) no-repeat center center / cover`;
-      document.querySelector('.container').style.background = `url(${reader.result}) no-repeat center center / cover`;
+      const bgStyle = `url(${reader.result}) no-repeat center center / cover`;
+      document.body.style.background = bgStyle;
+      document.querySelector('.container').style.background = bgStyle;
+      document.getElementById('calculator').style.background = bgStyle;
     };
     reader.readAsDataURL(file);
   }
@@ -170,7 +205,9 @@ bgImage.addEventListener('change', e => {
 
 resetBg.addEventListener('click', () => {
   document.body.style.background = bgColor.value;
-  document.querySelector('.container').style.background = bgColor.value + 'cc';
+  const bgColorSemi = bgColor.value + 'cc';
+  document.querySelector('.container').style.background = bgColorSemi;
+  document.getElementById('calculator').style.background = bgColorSemi;
   bgImage.value = '';
 });
 
@@ -238,9 +275,8 @@ function renderTasks() {
   tasks.forEach((task,index)=>{
     const li = document.createElement('li');
     li.className = task.completed ? 'completed' : '';
-    const now = new Date();
     const dueDate = new Date(task.due);
-    const diff = dueDate - now;
+    const diff = dueDate - new Date();
     let urgency='low';
     if(diff <= 24*60*60*1000) urgency='high';
     else if(diff <= 3*24*60*60*1000) urgency='medium';
@@ -286,13 +322,30 @@ taskForm.addEventListener('submit',e=>{
 
 renderTasks();
 
-// ------------------- Calculator -------------------
+// ------------------- Improved Calculator -------------------
 let calcInput='';
 const calcDisplay=document.getElementById('calcDisplay');
-function calcPress(val){ calcInput+=val; calcDisplay.value=calcInput; }
-function calcCalculate(){ try{ calcInput=eval(calcInput).toString(); calcDisplay.value=calcInput;}catch(e){calcDisplay.value='Error'; calcInput='';} }
-function calcClear(){ calcInput=''; calcDisplay.value=''; }
-
+function calcPress(val){ 
+  calcInput += val; 
+  calcDisplay.value = calcInput; 
+}
+function calcCalculate(){ 
+  try { 
+    calcInput = eval(calcInput).toString(); 
+    calcDisplay.value = calcInput;
+  } catch(e) { 
+    calcDisplay.value = 'Error'; 
+    calcInput=''; 
+  }
+}
+function calcClear(){ 
+  calcInput=''; 
+  calcDisplay.value=''; 
+}
+function calcBackspace() {
+  calcInput = calcInput.slice(0,-1);
+  calcDisplay.value = calcInput;
+}
 </script>
 </body>
 </html>
