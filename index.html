@@ -3,349 +3,84 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Teacher Dashboard</title>
+<title>Homework Helper</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 20px;
-    transition: background 0.5s ease;
-  }
-  .container {
-    max-width: 900px;
-    margin: auto;
-    background: rgba(255,255,255,0.8);
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    transition: background 0.5s ease;
-  }
-  h1 { text-align: center; }
-  #clock { font-size: 1.5em; text-align: center; margin-bottom: 20px; }
-
-  /* Background controls */
-  #backgroundControls { margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-  #backgroundControls input, #backgroundControls button { padding: 10px; border-radius: 5px; border: 1px solid #ccc; cursor: pointer; }
-
-  /* Circular timer */
-  #timerContainer {
-    position: relative;
-    width: 200px;
-    height: 200px;
-    margin: 20px auto;
-  }
-  svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-  circle { fill: none; stroke-width: 10; }
-  #backgroundCircle { stroke: #eee; }
-  #progressCircle { stroke: #007bff; stroke-linecap: round; transition: stroke-dashoffset 0.5s linear; }
-  #timeDisplay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2em; }
-  #timerControls { text-align: center; margin-top: 10px; }
-
-  /* Task list */
-  form { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; justify-content: center; }
-  input, select, textarea, button { padding: 10px; border-radius: 5px; border: 1px solid #ccc; }
-  button { background: #007bff; color: white; border: none; }
-  button:hover { background: #0056b3; }
-  ul { list-style: none; padding: 0; margin-bottom: 20px; }
-  li { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; flex-wrap: wrap; }
-  .completed { text-decoration: line-through; color: gray; }
-  .task-info { flex: 1 1 60%; }
-  .countdown { font-weight: bold; }
-  .high { color: red; }
-  .medium { color: orange; }
-  .low { color: green; }
-
-  /* Calculator */
-  #calculator {
-    margin-top: 20px;
-    padding: 15px;
-    border-radius: 12px;
-    max-width: 300px;
-    transition: background 0.5s ease;
-  }
-  #calcDisplay {
-    width: 100%;
-    height: 40px;
-    margin-bottom: 10px;
-    text-align: right;
-    font-size: 1.2em;
-    padding-right: 10px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-  }
-  .calc-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-  }
-  .calc-buttons button {
-    flex: 1 1 22%;
-    padding: 15px 0;
-    font-size: 1.2em;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    background: #f0f0f0;
-    transition: 0.2s;
-  }
-  .calc-buttons button:hover { background: #d0d0d0; }
-  .calc-buttons .operator { background: #007bff; color: white; }
-  .calc-buttons .operator:hover { background: #0056b3; }
+  body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f4f8; }
+  .container { max-width:700px; margin:auto; background:#ffffffcc; padding:20px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+  h1 { text-align:center; }
+  button { padding:10px 20px; border-radius:6px; border:none; background:#007bff; color:white; cursor:pointer; margin:10px 0; }
+  button:hover { background:#0056b3; }
+  #extractedText { margin-top:20px; padding:10px; background:#e8e8e8; border-radius:8px; min-height:40px; white-space: pre-wrap; }
+  video, canvas { display:block; margin:10px auto; border-radius:8px; max-width:100%; }
 </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>Teacher Dashboard</h1>
-  <div id="clock"></div>
+  <h1>Homework Helper</h1>
 
-  <!-- Background Customization -->
-  <div id="backgroundControls">
-    <input type="color" id="bgColor" value="#f0f4f8" title="Pick Background Color">
-    <input type="file" id="bgImage" accept="image/*" title="Upload Background Image">
-    <button id="resetBg">Reset Background</button>
-  </div>
+  <!-- Upload Image -->
+  <input type="file" id="questionImage" accept="image/*"><br>
+  <button id="solveBtn">Extract Text from Uploaded Photo</button>
 
-  <!-- Circular Timer -->
-  <div id="timerContainer">
-    <svg>
-      <circle id="backgroundCircle" cx="100" cy="100" r="90"></circle>
-      <circle id="progressCircle" cx="100" cy="100" r="90" stroke-dasharray="565.48" stroke-dashoffset="0"></circle>
-    </svg>
-    <div id="timeDisplay">00:00</div>
-  </div>
-  <div id="timerControls">
-    <input type="number" id="timerMinutes" placeholder="Minutes (1-60)" min="1" max="60">
-    <button id="startTimerBtn">Start</button>
-    <button id="pauseTimerBtn">Pause</button>
-    <button id="resetTimerBtn">Reset</button>
-  </div>
+  <hr>
 
-  <!-- Task List -->
-  <form id="taskForm">
-    <input type="text" id="taskTitle" placeholder="Task title" required>
-    <textarea id="taskDesc" placeholder="Description" rows="1"></textarea>
-    <select id="taskCategory">
-      <option value="General">General</option>
-      <option value="Homework">Homework</option>
-      <option value="Quiz">Quiz</option>
-      <option value="Project">Project</option>
-      <option value="Meeting">Meeting</option>
-    </select>
-    <input type="datetime-local" id="taskDue" required>
-    <button type="submit">Add Task</button>
-  </form>
-  <ul id="taskList"></ul>
+  <!-- Webcam Capture -->
+  <video id="video" autoplay playsinline width="400" height="300"></video><br>
+  <button id="captureBtn">Capture Photo</button>
+  <canvas id="canvas" width="400" height="300" style="display:none;"></canvas>
+  <button id="solvePhotoBtn">Extract Text from Captured Photo</button>
 
-  <!-- Improved Calculator -->
-  <div id="calculator">
-    <h2>Calculator</h2>
-    <input type="text" id="calcDisplay" readonly>
-    <div class="calc-buttons">
-      <button onclick="calcPress('7')">7</button>
-      <button onclick="calcPress('8')">8</button>
-      <button onclick="calcPress('9')">9</button>
-      <button class="operator" onclick="calcPress('/')">÷</button>
-
-      <button onclick="calcPress('4')">4</button>
-      <button onclick="calcPress('5')">5</button>
-      <button onclick="calcPress('6')">6</button>
-      <button class="operator" onclick="calcPress('*')">×</button>
-
-      <button onclick="calcPress('1')">1</button>
-      <button onclick="calcPress('2')">2</button>
-      <button onclick="calcPress('3')">3</button>
-      <button class="operator" onclick="calcPress('-')">−</button>
-
-      <button onclick="calcPress('0')">0</button>
-      <button onclick="calcPress('.')">.</button>
-      <button onclick="calcCalculate()">=</button>
-      <button class="operator" onclick="calcPress('+')">+</button>
-
-      <button onclick="calcClear()">C</button>
-      <button onclick="calcBackspace()">←</button>
-    </div>
-  </div>
+  <div id="extractedText">Question will appear here...</div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@v4.0.2/dist/tesseract.min.js"></script>
 <script>
-// ------------------- Clock -------------------
-const clock = document.getElementById('clock');
-function updateClock() {
-  const now = new Date();
-  clock.textContent = now.toLocaleString();
-}
-setInterval(updateClock, 1000);
-updateClock();
+// Elements
+const imageInput = document.getElementById('questionImage');
+const solveBtn = document.getElementById('solveBtn');
+const extractedTextDiv = document.getElementById('extractedText');
 
-// ------------------- Background -------------------
-const bgColor = document.getElementById('bgColor');
-const bgImage = document.getElementById('bgImage');
-const resetBg = document.getElementById('resetBg');
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const captureBtn = document.getElementById('captureBtn');
+const solvePhotoBtn = document.getElementById('solvePhotoBtn');
+const ctx = canvas.getContext('2d');
 
-bgColor.addEventListener('input', () => {
-  document.body.style.background = bgColor.value;
-  document.querySelector('.container').style.background = bgColor.value + 'cc';
-  document.getElementById('calculator').style.background = bgColor.value + 'cc';
+// ------------------- Webcam -------------------
+navigator.mediaDevices.getUserMedia({ video:true })
+  .then(stream => { video.srcObject = stream; })
+  .catch(err => console.error("Webcam error:", err));
+
+captureBtn.addEventListener('click', () => {
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  alert("Photo captured! Click 'Extract Text from Captured Photo'");
 });
 
-bgImage.addEventListener('change', e => {
-  const file = e.target.files[0];
-  if(file){
-    const reader = new FileReader();
-    reader.onload = () => {
-      const bgStyle = `url(${reader.result}) no-repeat center center / cover`;
-      document.body.style.background = bgStyle;
-      document.querySelector('.container').style.background = bgStyle;
-      document.getElementById('calculator').style.background = bgStyle;
-    };
-    reader.readAsDataURL(file);
-  }
-});
-
-resetBg.addEventListener('click', () => {
-  document.body.style.background = bgColor.value;
-  const bgColorSemi = bgColor.value + 'cc';
-  document.querySelector('.container').style.background = bgColorSemi;
-  document.getElementById('calculator').style.background = bgColorSemi;
-  bgImage.value = '';
-});
-
-// ------------------- Circular Timer -------------------
-const startBtn = document.getElementById('startTimerBtn');
-const pauseBtn = document.getElementById('pauseTimerBtn');
-const resetBtn = document.getElementById('resetTimerBtn');
-const timerMinutes = document.getElementById('timerMinutes');
-const timeDisplay = document.getElementById('timeDisplay');
-const progressCircle = document.getElementById('progressCircle');
-
-let timerInterval;
-let totalSeconds = 0;
-let remainingSeconds = 0;
-
-function updateTimerDisplay() {
-  const minutes = Math.floor(remainingSeconds/60);
-  const seconds = remainingSeconds % 60;
-  timeDisplay.textContent = `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
-  const circleCircumference = 2*Math.PI*90;
-  const offset = circleCircumference * (1 - remainingSeconds/totalSeconds);
-  progressCircle.style.strokeDasharray = circleCircumference;
-  progressCircle.style.strokeDashoffset = offset;
-}
-
-startBtn.addEventListener('click', () => {
-  const minutes = parseInt(timerMinutes.value);
-  if(!minutes || minutes > 60) return alert("Enter 1-60 minutes");
-  clearInterval(timerInterval);
-  totalSeconds = minutes*60;
-  remainingSeconds = totalSeconds;
-  updateTimerDisplay();
-  timerInterval = setInterval(() => {
-    remainingSeconds--;
-    updateTimerDisplay();
-    if(remainingSeconds <= 0) clearInterval(timerInterval);
-  },1000);
-});
-
-pauseBtn.addEventListener('click', ()=> clearInterval(timerInterval));
-resetBtn.addEventListener('click', ()=>{
-  clearInterval(timerInterval);
-  remainingSeconds = totalSeconds;
-  updateTimerDisplay();
-});
-
-// ------------------- Tasks -------------------
-const taskForm = document.getElementById('taskForm');
-const taskList = document.getElementById('taskList');
-let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-
-function calculateCountdown(due) {
-  const now = new Date();
-  const diff = new Date(due) - now;
-  if(diff<=0) return "Time's up!";
-  const days = Math.floor(diff/(1000*60*60*24));
-  const hours = Math.floor((diff/(1000*60*60))%24);
-  const minutes = Math.floor((diff/(1000*60))%60);
-  const seconds = Math.floor((diff/1000)%60);
-  return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-}
-
-function renderTasks() {
-  taskList.innerHTML = '';
-  tasks.forEach((task,index)=>{
-    const li = document.createElement('li');
-    li.className = task.completed ? 'completed' : '';
-    const dueDate = new Date(task.due);
-    const diff = dueDate - new Date();
-    let urgency='low';
-    if(diff <= 24*60*60*1000) urgency='high';
-    else if(diff <= 3*24*60*60*1000) urgency='medium';
-    li.innerHTML=`
-      <div class="task-info">
-        <strong>${task.title}</strong> (${task.category})<br>
-        ${task.desc}<br>
-        <span class="countdown ${urgency}" id="countdown-${index}"></span>
-      </div>
-      <div>
-        <button onclick="toggleComplete(${index})">✔️</button>
-        <button onclick="deleteTask(${index})">🗑️</button>
-      </div>
-    `;
-    taskList.appendChild(li);
-  });
-  localStorage.setItem('tasks',JSON.stringify(tasks));
-}
-
-setInterval(()=>{
-  tasks.forEach((task,index)=>{
-    const countdownEl=document.getElementById(`countdown-${index}`);
-    if(countdownEl) countdownEl.textContent=calculateCountdown(task.due);
-  });
-},1000);
-
-function toggleComplete(index){ tasks[index].completed=!tasks[index].completed; renderTasks(); }
-function deleteTask(index){ tasks.splice(index,1); renderTasks(); }
-
-taskForm.addEventListener('submit',e=>{
-  e.preventDefault();
-  const newTask={
-    title:document.getElementById('taskTitle').value,
-    desc:document.getElementById('taskDesc').value,
-    category:document.getElementById('taskCategory').value,
-    due:document.getElementById('taskDue').value,
-    completed:false
-  };
-  tasks.push(newTask);
-  taskForm.reset();
-  renderTasks();
-});
-
-renderTasks();
-
-// ------------------- Improved Calculator -------------------
-let calcInput='';
-const calcDisplay=document.getElementById('calcDisplay');
-function calcPress(val){ 
-  calcInput += val; 
-  calcDisplay.value = calcInput; 
-}
-function calcCalculate(){ 
-  try { 
-    calcInput = eval(calcInput).toString(); 
-    calcDisplay.value = calcInput;
-  } catch(e) { 
-    calcDisplay.value = 'Error'; 
-    calcInput=''; 
+// ------------------- OCR -------------------
+async function runOCR(fileOrCanvas){
+  extractedTextDiv.textContent = "Extracting text...";
+  try{
+    const { data: { text } } = await Tesseract.recognize(fileOrCanvas, 'eng', { logger:m=>console.log(m) });
+    extractedTextDiv.textContent = "Question extracted:\n" + text.trim();
+  } catch(err){
+    console.error(err);
+    extractedTextDiv.textContent = "Error extracting text.";
   }
 }
-function calcClear(){ 
-  calcInput=''; 
-  calcDisplay.value=''; 
-}
-function calcBackspace() {
-  calcInput = calcInput.slice(0,-1);
-  calcDisplay.value = calcInput;
-}
+
+// ------------------- Solve Uploaded -------------------
+solveBtn.addEventListener('click', () => {
+  const file = imageInput.files[0];
+  if(!file) return alert("Upload a question image!");
+  runOCR(file);
+});
+
+// ------------------- Solve Captured -------------------
+solvePhotoBtn.addEventListener('click', () => {
+  runOCR(canvas);
+});
 </script>
+
 </body>
 </html>
